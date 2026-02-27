@@ -5,10 +5,13 @@ import helmetConfig from "./src/config/helmet.config";
 import ratelimitConfig from "./src/config/ratelimit.config";
 import errorHandling from "./src/utils/errorHandling.util";
 import compressionConfig from "./src/config/compression.config";
+import MongoDataBaseConnection from "./src/config/db.config";
 // routes
 import IndexRoutes from "./src/routes/index.route";
 
 const app: Application = express();
+
+MongoDataBaseConnection();
 
 // configs using middlewares
 app.use(ratelimitConfig);
