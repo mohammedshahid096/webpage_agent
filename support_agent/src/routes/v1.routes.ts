@@ -1,8 +1,9 @@
 import { Router } from "express";
+import chatRoutes from "./agent.route";
 
 const apiV1Routes = Router();
 
-// auth routes
-// apiV1Routes.use("/auth", authRoutes);
+// chat routes
+apiV1Routes.use("/agent", chatRoutes);
 
 export default apiV1Routes;
