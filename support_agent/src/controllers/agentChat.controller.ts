@@ -3,6 +3,7 @@ import agentChatModel from "../schema/chatAgent.model";
 import httpError from "http-errors";
 import errorHandling, { AppError } from "../utils/errorHandling.util";
 import responseHandlingUtil from "../utils/responseHandling.util";
+import CheerioService from "../services/cheerio";
 
 export const getSessionDetailsController = async (
   req: Request,
@@ -42,6 +43,25 @@ export const createNewChatSessionController = async (
       statusCode: 200,
       message: "session details fetched successfully",
       data: newSession,
+    });
+  } catch (error) {
+    errorHandling.handlingControllersError(error as AppError, next);
+  }
+};
+
+export const loadWebsiteController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const cheerioService = new CheerioService({
+      url: "http://aethelflow.com/",
+    });
+
+    const docs = await cheerioService.scrapeCleanWebsite();
+    responseHandlingUtil.successResponseStandard(res, {
+      data: docs,
     });
   } catch (error) {
     errorHandling.handlingControllersError(error as AppError, next);
