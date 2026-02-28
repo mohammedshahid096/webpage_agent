@@ -4,6 +4,9 @@ import httpError from "http-errors";
 import errorHandling, { AppError } from "../utils/errorHandling.util";
 import responseHandlingUtil from "../utils/responseHandling.util";
 import CheerioService from "../services/cheerio";
+import ChromaService from "../services/chroma";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { embeddings_model_names } from "../constants/gemini.constant";
 
 export const getSessionDetailsController = async (
   req: Request,
@@ -64,6 +67,19 @@ export const loadWebsiteController = async (
 
     const filterDocs = splitDocs.slice(0, 4);
 
+    const WEB_COLLECTION_NAME = "web_scrapping";
+
+    const embeddings = new GoogleGenerativeAIEmbeddings({
+      model: embeddings_model_names["gemini-embedding-001"], // 768 dimensions
+      apiVersion: "v1",
+    } as any);
+
+    const chromaService = new ChromaService({
+      collectionName: WEB_COLLECTION_NAME,
+      embeddings,
+    });
+
+    await chromaService.insertBatchSafe(filterDocs);
     responseHandlingUtil.successResponseStandard(res, {
       data: filterDocs,
     });

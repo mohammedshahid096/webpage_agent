@@ -147,6 +147,7 @@ class ChromaService {
       }
     } catch (error: any) {
       console.error("error received -->", error?.message);
+      throw error;
     }
   }
 
