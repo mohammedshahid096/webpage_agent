@@ -56,12 +56,16 @@ export const loadWebsiteController = async (
 ) => {
   try {
     const cheerioService = new CheerioService({
-      url: "http://aethelflow.com/",
+      url: "http://aethelflow.com",
     });
 
-    const docs = await cheerioService.scrapeCleanWebsite();
+    const docs = await cheerioService.scrapeWebsite2();
+    const splitDocs = await cheerioService.generateChunks(docs);
+
+    const filterDocs = splitDocs.slice(0, 4);
+
     responseHandlingUtil.successResponseStandard(res, {
-      data: docs,
+      data: filterDocs,
     });
   } catch (error) {
     errorHandling.handlingControllersError(error as AppError, next);
