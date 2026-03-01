@@ -110,7 +110,10 @@ export const agentChatController = async (
       sessionId: chatDetails._id.toString(),
     });
 
-    const aiResponse = await agentService.processRequest(inputMessage, {});
+    const aiResponse = await agentService.processRequest(
+      inputMessage,
+      chatDetails,
+    );
     const tokenUsage = aiResponse.messages?.[1]?.response_metadata
       ?.tokenUsage as any;
 
@@ -140,7 +143,7 @@ export const agentChatController = async (
 
     responseHandlingUtil.successResponseStandard(res, {
       data: updatedDetails,
-      otherData: { aiResponse },
+      otherData: { aiResponse, aiMessage: aiResponse.output },
     });
   } catch (error) {
     errorHandling.handlingControllersError(error as AppError, next);
