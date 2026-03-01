@@ -9,6 +9,8 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { embeddings_model_names } from "../constants/gemini.constant";
 import AgentService from "../services/agent.service";
 
+const WEB_COLLECTION_NAME = "web_scrapping";
+
 export const getSessionDetailsController = async (
   req: Request,
   res: Response,
@@ -68,8 +70,6 @@ export const loadWebsiteController = async (
 
     const filterDocs = splitDocs.slice(0, 4);
 
-    const WEB_COLLECTION_NAME = "web_scrapping";
-
     const embeddings = new GoogleGenerativeAIEmbeddings({
       model: embeddings_model_names["gemini-embedding-001"], // 768 dimensions
       apiVersion: "v1",
@@ -110,9 +110,23 @@ export const agentChatController = async (
       sessionId: chatDetails._id.toString(),
     });
 
+    const embeddings = new GoogleGenerativeAIEmbeddings({
+      model: embeddings_model_names["gemini-embedding-001"], // 768 dimensions
+      apiVersion: "v1",
+    } as any);
+
+    const chromaService = new ChromaService({
+      collectionName: WEB_COLLECTION_NAME,
+      embeddings,
+    });
+
+    const chromaQueryData = await chromaService.query(inputMessage);
+    const context = chromaQueryData.map((doc) => doc.pageContent).join("\n\n");
+
     const aiResponse = await agentService.processRequest(
       inputMessage,
       chatDetails,
+      context,
     );
     const tokenUsage = aiResponse.messages?.[1]?.response_metadata
       ?.tokenUsage as any;

@@ -71,12 +71,22 @@ class AgentService {
   async processRequest(
     input: string = "",
     sessionData: ProcessRequestInput = {},
+    context: string = "",
   ): Promise<ProcessRequestResponse> {
     try {
+      const systemPromptWithContext = context
+        ? `${this.systemPrompt}
+      ---
+      Here is the relevant context from the website to help answer the user's query:
+      ${context}
+      ---
+      Use this context to provide accurate, website-specific answers. If the context doesn't contain the answer, rely on your general knowledge.`
+        : this.systemPrompt;
+
       const agent = createAgent({
         model: this.googleModel,
         tools: this.agentTools,
-        systemPrompt: this.systemPrompt,
+        systemPrompt: systemPromptWithContext,
       });
 
       const messageHistory = this.buildMessageHistory(sessionData?.messages);
