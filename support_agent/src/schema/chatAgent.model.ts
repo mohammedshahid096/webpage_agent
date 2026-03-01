@@ -3,15 +3,19 @@ import modelConstants from "../constants/model.constant";
 
 export interface IMessage {
   content?: string;
-  role?: "user" | "ai";
+  role?: "human" | "ai";
   timestamp?: Date;
   metadata?: mongoose.Schema.Types.Mixed;
+  tokenUsage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
 }
 
 export interface IAgentChat extends Document {
   date: Date;
   messages: IMessage[];
-  history?: mongoose.Schema.Types.Mixed;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,9 +23,14 @@ export interface IAgentChat extends Document {
 const MessageSchema = new Schema<IMessage>(
   {
     content: { type: String },
-    role: { type: String, enum: ["user", "ai"] },
+    role: { type: String, enum: ["human", "ai"] },
     timestamp: { type: Date, default: Date.now },
     metadata: Schema.Types.Mixed,
+    tokenUsage: {
+      input_tokens: { type: Number },
+      output_tokens: { type: Number },
+      total_tokens: { type: Number },
+    },
   },
   { _id: true },
 );
@@ -30,7 +39,6 @@ const ModelSchema = new Schema<IAgentChat>(
   {
     date: { type: Date, required: true, default: Date.now },
     messages: [MessageSchema],
-    history: Schema.Types.Mixed,
   },
   { timestamps: true },
 );
