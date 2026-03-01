@@ -24,10 +24,16 @@ export const getSessionDetailsController = async (
       return next(httpError(404, "Session not found"));
     }
 
+    // const filterDocs = sessionData?.messages?.map((item) => ({
+    //   content: item.content,
+    //   role: item.role,
+    // }));
+
     responseHandlingUtil.successResponseStandard(res, {
       statusCode: 200,
       message: "session details fetched successfully",
       data: sessionData,
+      // otherData: { filterDocs },
     });
   } catch (error) {
     errorHandling.handlingControllersError(error as AppError, next);
@@ -128,8 +134,8 @@ export const agentChatController = async (
       chatDetails,
       context,
     );
-    const tokenUsage = aiResponse.messages?.[1]?.response_metadata
-      ?.tokenUsage as any;
+    const tokenUsage = aiResponse.messages?.[aiResponse.messages.length - 1]
+      ?.response_metadata?.tokenUsage as any;
 
     const newMessageData: IMessage[] = [
       {

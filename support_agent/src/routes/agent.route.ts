@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   agentChatController,
   createNewChatSessionController,
+  getSessionDetailsController,
   loadWebsiteController,
 } from "../controllers/agentChat.controller";
 
@@ -12,5 +13,9 @@ chatRoutes.route("/new-session").post(createNewChatSessionController);
 chatRoutes.route("/load-website").get(loadWebsiteController);
 
 chatRoutes.route("/:sessionId/chat-agent").post(agentChatController);
+
+chatRoutes
+  .route("/:sessionId/session-details")
+  .get(getSessionDetailsController);
 
 export default chatRoutes;
