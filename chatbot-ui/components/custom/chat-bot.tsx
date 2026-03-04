@@ -11,6 +11,8 @@ import {
   sendChatMessageApi,
   sessionDetailsApi,
 } from "@/app/apis/chatbot.api";
+import { v4 as uuidV4 } from "uuid";
+import { Message } from "@/app/types/chatbot.types";
 
 interface InitialChatBotProps {
   postPassingMessageFunction: (properties: CSSProperties) => void;
@@ -43,10 +45,31 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
     e.preventDefault();
     if (!info?.inputMessage.trim() || !sessionDetails?._id) return;
 
+    let updateState = {
+      inputMessasge: info?.inputMessage?.trim() || "",
+    };
+
     setInfo((prev) => ({
       ...prev,
       isLoading: true,
+      inputMessage: "",
     }));
+
+    let newMessage: Message = {
+      _id: uuidV4(),
+      role: "human",
+      content: info?.inputMessage?.trim(),
+      timestamp: new Date().toISOString(),
+    };
+
+    setSessionDetails((prev) => {
+      if (!prev) return prev; // or return null
+
+      return {
+        ...prev,
+        messages: [...prev.messages, newMessage],
+      };
+    });
 
     const response = await sendChatMessageApi(sessionDetails?._id, {
       inputMessage: info?.inputMessage?.trim(),
@@ -55,11 +78,13 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
     if (response[0]) {
       const details = response[1]?.data;
       setSessionDetails(details);
+      updateState.inputMessasge = "";
     }
 
     setInfo((prev) => ({
       ...prev,
       isLoading: false,
+      ...updateState,
     }));
   };
 
