@@ -8,13 +8,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { SessionDetails } from "../apis/chatbot.types";
-
-type Message = {
-  id: string;
-  text: string;
-  sender: "user" | "bot";
-};
+import { Message, SessionDetails } from "../types/chatbot.types";
 
 type ChatContextType = {
   messages: Message[];

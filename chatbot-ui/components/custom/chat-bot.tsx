@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useChatProvider } from "@/app/providers/chatContext";
-import { createNewSessionApi } from "@/app/apis/chatbot.api";
+import { createNewSessionApi, sessionDetailsApi } from "@/app/apis/chatbot.api";
 
 interface Message {
   id: string;
@@ -22,18 +22,11 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   postPassingMessageFunction,
 }) => {
   const { sessionDetails, setSessionDetails } = useChatProvider();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hi! How can I help you today?",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [info, setInfo] = useState({
     isOpen: false,
+    sessionLoading: false,
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,8 +35,12 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   };
 
   useEffect(() => {
+    getSessionDetailsFunction("69a40c49abcf03f0242b4a38");
+  }, []);
+
+  useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [sessionDetails?.messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,25 +54,16 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-
-    // Simulate bot response delay
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "This is a demo response. Connect to an AI API to enable real responses!",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      setIsLoading(false);
-    }, 500);
   };
 
   const openChatModelFunction = () => {
-    setInfo((prev) => ({ ...prev, isOpen: true }));
+    setInfo((prev) => ({
+      ...prev,
+      isOpen: true,
+      sessionLoading: sessionDetails ? false : true,
+    }));
     postPassingMessageFunction({
       width: "430px",
       height: "620px",
@@ -100,11 +88,21 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
     if (response[0]) {
       const details = response[1]?.data;
       setSessionDetails({
-        _id: details._id,
-        date: details.date,
-        createdAt: details.createdAt,
-        updatedAt: details.updatedAt,
+        ...details,
       });
+    }
+
+    setInfo((prev) => ({
+      ...prev,
+      sessionLoading: false,
+    }));
+  };
+
+  const getSessionDetailsFunction = async (sessionId: string) => {
+    const response = await sessionDetailsApi(sessionId);
+    if (response[0]) {
+      const details = response[1]?.data;
+      setSessionDetails(details);
     }
   };
 
@@ -136,19 +134,19 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
-            {messages.map((message) => (
+            {sessionDetails?.messages?.map((message) => (
               <div
-                key={message.id}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                key={message?._id}
+                className={`flex ${message.role === "human" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
-                    message.sender === "user"
+                    message?.role === "human"
                       ? "bg-slate-900 text-white rounded-br-none"
                       : "bg-white text-slate-900 border border-slate-200 rounded-bl-none"
                   }`}
                 >
-                  {message.text}
+                  {message?.content}
                 </div>
               </div>
             ))}

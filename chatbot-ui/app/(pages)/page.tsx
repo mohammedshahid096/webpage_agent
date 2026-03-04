@@ -15,5 +15,6 @@ export default function Home() {
 
     window.parent.postMessage(payload, "*");
   };
+
   return <ChatBot postPassingMessageFunction={postPassingMessageFunction} />;
 }
