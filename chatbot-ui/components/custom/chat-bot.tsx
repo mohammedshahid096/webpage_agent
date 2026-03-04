@@ -8,13 +8,6 @@ import { MessageCircle, X, Send } from "lucide-react";
 import { useChatProvider } from "@/app/providers/chatContext";
 import { createNewSessionApi, sessionDetailsApi } from "@/app/apis/chatbot.api";
 
-interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-}
-
 interface InitialChatBotProps {
   postPassingMessageFunction: (properties: CSSProperties) => void;
 }
@@ -22,11 +15,11 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   postPassingMessageFunction,
 }) => {
   const { sessionDetails, setSessionDetails } = useChatProvider();
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [info, setInfo] = useState({
     isOpen: false,
     sessionLoading: false,
+    isLoading: false,
+    inputMessage: "",
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -44,18 +37,12 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!info?.inputMessage.trim()) return;
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: input,
-      sender: "user",
-      timestamp: new Date(),
-    };
-
-    setInput("");
-    setIsLoading(true);
+    setInfo((prev) => ({
+      ...prev,
+      isLoading: true,
+    }));
   };
 
   const openChatModelFunction = () => {
@@ -150,7 +137,7 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
                 </div>
               </div>
             ))}
-            {isLoading && (
+            {info?.isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white text-slate-900 border border-slate-200 px-4 py-2 rounded-lg rounded-bl-none">
                   <div className="flex gap-1">
@@ -176,14 +163,16 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
               <Input
                 type="text"
                 placeholder="Type a message..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading}
+                value={info?.inputMessage}
+                disabled={info?.isLoading}
+                onChange={(e) =>
+                  setInfo((prev) => ({ ...prev, inputMessage: e.target.value }))
+                }
                 className="flex-1 border-slate-300 focus:border-slate-400"
               />
               <Button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={info?.isLoading || !info?.inputMessage.trim()}
                 className="bg-slate-900 hover:bg-slate-800 text-white"
               >
                 <Send className="w-4 h-4" />
