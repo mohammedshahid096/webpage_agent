@@ -11,3 +11,14 @@ export const sessionDetailsApi = async (sessionId: string) => {
   );
   return response;
 };
+
+export const sendChatMessageApi = async (
+  sessionId: string,
+  json: { inputMessage: string },
+) => {
+  const response = await Service.fetchPost(
+    `/agent/${sessionId}/chat-agent`,
+    json,
+  );
+  return response;
+};

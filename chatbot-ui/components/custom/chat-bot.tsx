@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useChatProvider } from "@/app/providers/chatContext";
-import { createNewSessionApi, sessionDetailsApi } from "@/app/apis/chatbot.api";
+import {
+  createNewSessionApi,
+  sendChatMessageApi,
+  sessionDetailsApi,
+} from "@/app/apis/chatbot.api";
 
 interface InitialChatBotProps {
   postPassingMessageFunction: (properties: CSSProperties) => void;
@@ -37,11 +41,25 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!info?.inputMessage.trim()) return;
+    if (!info?.inputMessage.trim() || !sessionDetails?._id) return;
 
     setInfo((prev) => ({
       ...prev,
       isLoading: true,
+    }));
+
+    const response = await sendChatMessageApi(sessionDetails?._id, {
+      inputMessage: info?.inputMessage?.trim(),
+    });
+
+    if (response[0]) {
+      const details = response[1]?.data;
+      setSessionDetails(details);
+    }
+
+    setInfo((prev) => ({
+      ...prev,
+      isLoading: false,
     }));
   };
 
