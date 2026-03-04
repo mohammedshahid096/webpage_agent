@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
+import { useChatProvider } from "@/app/providers/chatContext";
 
 interface Message {
   id: string;
@@ -19,6 +20,8 @@ interface InitialChatBotProps {
 const ChatBot: React.FC<InitialChatBotProps> = ({
   postPassingMessageFunction,
 }) => {
+  const { sessionDetails } = useChatProvider();
+  // console.log(sessionDetails, "shahid");
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {

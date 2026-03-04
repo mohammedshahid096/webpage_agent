@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   devIndicators: false,
+  reactStrictMode: false, // ← disables double-render in dev
 };
 
 export default nextConfig;
