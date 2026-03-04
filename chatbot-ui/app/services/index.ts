@@ -1,165 +1,194 @@
 import axios from "axios";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosConfig, RequestMethodInstance } from "./axiosInstance";
+import API_URLS from "./config";
 
-export class AxiosConfig {
-  private config: AxiosRequestConfig;
+// Define access point keys based on API_URLS
+type AccessPoint = "server";
 
-  constructor() {
-    this.config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-  }
+// Content type options
+type ContentType = "json" | "formData" | null;
 
-  addConfig<K extends keyof AxiosRequestConfig>(
-    key: K,
-    value: AxiosRequestConfig[K],
-  ): void {
-    this.config[key] = value;
-  }
+// Define the unified API response tuple
+type ServiceResponse<T = any> = [boolean, T, number?, AxiosResponse?];
 
-  removeConfig(key: keyof AxiosRequestConfig): void {
-    if (Object.prototype.hasOwnProperty.call(this.config, key)) {
-      delete this.config[key];
-    }
-  }
-
-  addConfigHeader(key: string, value: string): void {
-    if (!this.config.headers) this.config.headers = {};
-    this.config.headers[key] = value;
-  }
-
-  removeConfigHeader(key: string): void {
-    if (this.config.headers && key in this.config.headers) {
-      delete this.config.headers[key];
-    }
-  }
-
-  removeContentType(): void {
-    this.removeConfigHeader("Content-Type");
-  }
-
-  addAuthorization(token: string): void {
-    this.addConfigHeader("Authorization", `Bearer ${token}`);
-  }
-
-  addFormHeaderContentType(): void {
-    this.addConfigHeader("Content-Type", "multipart/form-data");
-  }
-
-  getConfig(): AxiosRequestConfig {
-    return this.config;
-  }
-}
+// Map base API URLs
+const ApiUrlMapper: Record<AccessPoint, string> = {
+  server: API_URLS.API_SERVER,
+};
 
 /**
- * RequestMethodInstance handles API requests with cancellation support.
+ * Builds headers dynamically based on token and content type.
  */
-export class RequestMethodInstance {
-  private activeRequests: Map<string, AbortController>;
+const handleHeaders = (
+  token?: string | null,
+  contentType?: ContentType,
+): AxiosRequestConfig => {
+  const axiosConfig = new AxiosConfig();
 
-  constructor() {
-    this.activeRequests = new Map();
+  if (!contentType) {
+    axiosConfig.removeContentType();
+  } else if (contentType === "formData") {
+    axiosConfig.addFormHeaderContentType();
   }
 
-  /** Generate a unique key for each request */
-  private getRequestKey(url: string, method: string): string {
-    return `${method.toUpperCase()}:${url}`;
+  if (token) {
+    axiosConfig.addAuthorization(token);
   }
 
-  /** Cancel specific request */
-  cancelRequest(url: string, method: string): void {
-    const key = this.getRequestKey(url, method);
-    const controller = this.activeRequests.get(key);
-    if (controller) {
-      controller.abort();
-      this.activeRequests.delete(key);
+  return axiosConfig.getConfig();
+};
+
+/**
+ * Handles Axios responses and normalizes the result.
+ */
+const processResponse = async <T = any>(
+  response: AxiosResponse<T> | any,
+): Promise<ServiceResponse<T>> => {
+  if (response?.message === "Network Error") {
+    return [false, { message: response.message } as T, 500];
+  }
+
+  if (response.status === 200 || response.status === 201) {
+    return [true, response.data, response.status, response];
+  } else if (response.status === 401) {
+    onUserKickedOut();
+    return [false, response.data, response.status, response];
+  } else {
+    return [false, response.data, response.status, response];
+  }
+};
+
+// Create API request handler
+const apiFetch = new RequestMethodInstance();
+
+/**
+ * Unified API service with typed endpoints.
+ */
+const Service = {
+  fetchGet: async <T = any>(
+    url: string,
+    token: string | null = null,
+    contentType: ContentType = null,
+    accessPoint: AccessPoint = "server",
+  ): Promise<ServiceResponse<T>> => {
+    try {
+      const endpoint = ApiUrlMapper[accessPoint] + url;
+      const headers = handleHeaders(token, contentType);
+      const response = await apiFetch.getMethod<T>(endpoint, headers);
+      return processResponse(response);
+    } catch (error: any) {
+      if (axios.isCancel(error)) {
+        console.log(`Request to ${url} was cancelled`);
+        return [false, { message: "api is aborted" } as T];
+      }
+      onFailure("network", url);
+      return processResponse(error?.response || error);
     }
-  }
+  },
 
-  /** Cancel all active requests */
-  cancelAllRequests(): void {
-    this.activeRequests.forEach((controller) => controller.abort());
-    this.activeRequests.clear();
-  }
+  fetchPost: async <T = any, B = any>(
+    url: string,
+    body: B,
+    token?: string,
+    contentType: ContentType = "json",
+    accessPoint: AccessPoint = "server",
+  ): Promise<ServiceResponse<T>> => {
+    try {
+      const endpoint = ApiUrlMapper[accessPoint] + url;
+      const headers = handleHeaders(token, contentType);
+      const response = await apiFetch.postMethod<T, B>(endpoint, body, headers);
+      return processResponse(response);
+    } catch (error: any) {
+      onFailure("network", url);
+      return processResponse(error?.response || error);
+    }
+  },
 
-  /** Register a new request with its controller */
-  private registerRequest(
+  fetchPut: async <T = any, B = any>(
+    url: string,
+    body: B,
+    token: string | null = null,
+    contentType: ContentType = "json",
+    accessPoint: AccessPoint = "server",
+  ): Promise<ServiceResponse<T>> => {
+    try {
+      const endpoint = ApiUrlMapper[accessPoint] + url;
+      const headers = handleHeaders(token, contentType);
+      const response = await apiFetch.putMethod<T, B>(endpoint, body, headers);
+      return processResponse(response);
+    } catch (error: any) {
+      onFailure("network", url);
+      return processResponse(error?.response || error);
+    }
+  },
+
+  fetchPatch: async <T = any, B = any>(
+    url: string,
+    body: B,
+    token: string | null = null,
+    contentType: ContentType = "json",
+    accessPoint: AccessPoint = "server",
+  ): Promise<ServiceResponse<T>> => {
+    try {
+      const endpoint = ApiUrlMapper[accessPoint] + url;
+      const headers = handleHeaders(token, contentType);
+      const response = await apiFetch.patchMethod<T, B>(
+        endpoint,
+        body,
+        headers,
+      );
+      return processResponse(response);
+    } catch (error: any) {
+      onFailure("network", url);
+      return processResponse(error?.response || error);
+    }
+  },
+
+  fetchDelete: async <T = any>(
+    url: string,
+    token: string | null = null,
+    contentType: ContentType = "json",
+    accessPoint: AccessPoint = "server",
+  ): Promise<ServiceResponse<T>> => {
+    try {
+      const endpoint = ApiUrlMapper[accessPoint] + url;
+      const headers = handleHeaders(token, contentType);
+      const response = await apiFetch.deleteMethod<T>(endpoint, headers);
+      return processResponse(response);
+    } catch (error: any) {
+      onFailure("network", url);
+      return processResponse(error?.response || error);
+    }
+  },
+
+  cancelAllRequests: (): void => {
+    apiFetch.cancelAllRequests();
+  },
+
+  cancelRequest: (
     url: string,
     method: string,
-    controller: AbortController,
-  ): () => void {
-    const key = this.getRequestKey(url, method);
-    this.activeRequests.set(key, controller);
-    return () => this.activeRequests.delete(key);
-  }
+    accessPoint: AccessPoint = "server",
+  ): void => {
+    const endpoint = ApiUrlMapper[accessPoint] + url;
+    apiFetch.cancelRequest(endpoint, method);
+  },
+};
 
-  /** Generic GET method */
-  async getMethod<T = any>(
-    url: string,
-    headers?: AxiosRequestConfig,
-  ): Promise<AxiosResponse<T>> {
-    const controller = new AbortController();
-    const config = { ...headers, signal: controller.signal };
-    const cleanup = this.registerRequest(url, "GET", controller);
-    const response = await axios.get<T>(url, config);
-    cleanup();
-    return response;
-  }
+/**
+ * Handles generic API failures.
+ */
+const onFailure = async (res: string, url: string): Promise<void> => {
+  console.error(`API FAILED: ${url} (${res})`);
+};
 
-  /** Generic POST method */
-  async postMethod<T = any, B = any>(
-    url: string,
-    body?: B,
-    headers?: AxiosRequestConfig,
-  ): Promise<AxiosResponse<T>> {
-    const controller = new AbortController();
-    const config = { ...headers, signal: controller.signal };
-    const cleanup = this.registerRequest(url, "POST", controller);
-    const response = await axios.post<T>(url, body, config);
-    cleanup();
-    return response;
-  }
+/**
+ * Handles forced user logout (401 responses).
+ */
+const onUserKickedOut = async (): Promise<void> => {
+  // localStorage.clear();
+  // window.location.href = "/";
+};
 
-  /** Generic PUT method */
-  async putMethod<T = any, B = any>(
-    url: string,
-    body?: B,
-    headers?: AxiosRequestConfig,
-  ): Promise<AxiosResponse<T>> {
-    const controller = new AbortController();
-    const config = { ...headers, signal: controller.signal };
-    const cleanup = this.registerRequest(url, "PUT", controller);
-    const response = await axios.put<T>(url, body, config);
-    cleanup();
-    return response;
-  }
-
-  /** Generic PATCH method */
-  async patchMethod<T = any, B = any>(
-    url: string,
-    body?: B,
-    headers?: AxiosRequestConfig,
-  ): Promise<AxiosResponse<T>> {
-    const controller = new AbortController();
-    const config = { ...headers, signal: controller.signal };
-    const cleanup = this.registerRequest(url, "PATCH", controller);
-    const response = await axios.patch<T>(url, body, config);
-    cleanup();
-    return response;
-  }
-
-  /** Generic DELETE method */
-  async deleteMethod<T = any>(
-    url: string,
-    headers?: AxiosRequestConfig,
-  ): Promise<AxiosResponse<T>> {
-    const controller = new AbortController();
-    const config = { ...headers, signal: controller.signal };
-    const cleanup = this.registerRequest(url, "DELETE", controller);
-    const response = await axios.delete<T>(url, config);
-    cleanup();
-    return response;
-  }
-}
+export default Service;

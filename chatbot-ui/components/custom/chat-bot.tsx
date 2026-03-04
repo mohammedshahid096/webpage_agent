@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useChatProvider } from "@/app/providers/chatContext";
+import { createNewSessionApi } from "@/app/apis/chatbot.api";
 
 interface Message {
   id: string;
@@ -20,9 +21,7 @@ interface InitialChatBotProps {
 const ChatBot: React.FC<InitialChatBotProps> = ({
   postPassingMessageFunction,
 }) => {
-  const { sessionDetails } = useChatProvider();
-  // console.log(sessionDetails, "shahid");
-  const [isOpen, setIsOpen] = useState(false);
+  const { sessionDetails, setSessionDetails } = useChatProvider();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -33,6 +32,9 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [info, setInfo] = useState({
+    isOpen: false,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -73,16 +75,19 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   };
 
   const openChatModelFunction = () => {
-    setIsOpen(true);
+    setInfo((prev) => ({ ...prev, isOpen: true }));
     postPassingMessageFunction({
       width: "430px",
       height: "620px",
       borderRadius: 0,
     });
+    if (!sessionDetails) {
+      createNewSessionFunction();
+    }
   };
 
   const closeChatModelFunction = () => {
-    setIsOpen(false);
+    setInfo((prev) => ({ ...prev, isOpen: false }));
     postPassingMessageFunction({
       width: "56px",
       height: "56px",
@@ -90,10 +95,23 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
     });
   };
 
+  const createNewSessionFunction = async () => {
+    const response = await createNewSessionApi();
+    if (response[0]) {
+      const details = response[1]?.data;
+      setSessionDetails({
+        _id: details._id,
+        date: details.date,
+        createdAt: details.createdAt,
+        updatedAt: details.updatedAt,
+      });
+    }
+  };
+
   return (
     <>
       {/* Chat Popup */}
-      {isOpen && (
+      {info?.isOpen && (
         <div className="fixed bottom-24 right-6 w-96  rounded-lg  flex flex-col z-50 h-[500px] border border-slate-200 transition-all">
           {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
@@ -109,7 +127,7 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsOpen(false)}
+              onClick={closeChatModelFunction}
               className="text-white hover:bg-slate-700"
             >
               <X className="w-5 h-5" />
@@ -179,10 +197,10 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
 
       {/* Floating Chat Button */}
       <button
-        onClick={isOpen ? closeChatModelFunction : openChatModelFunction}
+        onClick={info?.isOpen ? closeChatModelFunction : openChatModelFunction}
         className="fixed bottom-0 right-0 w-14 h-14 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-full  hover:scale-110 transition-all duration-200 flex items-center justify-center z-40 border-4 border-white cursor-pointer "
       >
-        {isOpen ? (
+        {info?.isOpen ? (
           <X className="w-6 h-6" />
         ) : (
           <MessageCircle className="w-6 h-6" />

@@ -8,7 +8,7 @@ interface ServerConfig {
 
 // Development configuration
 const development: ServerConfig = {
-  API_SERVER: "http://localhost:80001",
+  API_SERVER: "http://localhost:8001/api/v1",
 };
 
 // Production configuration

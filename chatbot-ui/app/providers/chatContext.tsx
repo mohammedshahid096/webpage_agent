@@ -8,6 +8,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
+import { SessionDetails } from "../apis/chatbot.types";
 
 type Message = {
   id: string;
@@ -18,7 +19,8 @@ type Message = {
 type ChatContextType = {
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
-  sessionDetails: null;
+  sessionDetails: null | SessionDetails;
+  setSessionDetails: Dispatch<SetStateAction<null | SessionDetails>>;
 };
 
 type ChatProviderProps = {
@@ -39,7 +41,9 @@ export const useChatProvider = (): ChatContextType => {
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionDetails, setsessionDetails] = useState<null>(null);
+  const [sessionDetails, setSessionDetails] = useState<null | SessionDetails>(
+    null,
+  );
 
   return (
     <ChatContext.Provider
@@ -47,6 +51,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         messages,
         setMessages,
         sessionDetails,
+        setSessionDetails,
       }}
     >
       {children}
