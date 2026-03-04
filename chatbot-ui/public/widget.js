@@ -10,20 +10,20 @@
   const iframe = document.createElement("iframe");
   iframe.src = `${baseUrl}`;
   iframe.id = "widget-iframe-chat-bot-id";
-  iframe.style.width = "120px";
-  iframe.style.height = "90px";
+  iframe.style.width = "56px";
+  iframe.style.height = "56px";
 
-  iframe.style.minWidth = "120px";
-  iframe.style.minHeight = "90px";
+  iframe.style.minWidth = "56px";
+  iframe.style.minHeight = "56px";
 
   iframe.style.maxWidth = "100vw";
   iframe.style.maxHeight = "100vh";
 
   iframe.style.position = "fixed";
-  iframe.style.bottom = "10px";
-  iframe.style.right = "0";
+  iframe.style.bottom = "24px";
+  iframe.style.right = "24px";
   iframe.style.border = "none";
-  iframe.style.borderRadius = "12px";
+  iframe.style.borderRadius = "50px";
   iframe.style.overflow = "hidden";
   iframe.style.zIndex = "999999";
 

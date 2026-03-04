@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send } from "lucide-react";
@@ -12,7 +13,12 @@ interface Message {
   timestamp: Date;
 }
 
-export default function ChatBot() {
+interface InitialChatBotProps {
+  postPassingMessageFunction: (properties: CSSProperties) => void;
+}
+const ChatBot: React.FC<InitialChatBotProps> = ({
+  postPassingMessageFunction,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -63,11 +69,29 @@ export default function ChatBot() {
     }, 500);
   };
 
+  const openChatModelFunction = () => {
+    setIsOpen(true);
+    postPassingMessageFunction({
+      width: "430px",
+      height: "620px",
+      borderRadius: 0,
+    });
+  };
+
+  const closeChatModelFunction = () => {
+    setIsOpen(false);
+    postPassingMessageFunction({
+      width: "56px",
+      height: "56px",
+      borderRadius: "50px",
+    });
+  };
+
   return (
     <>
       {/* Chat Popup */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 bg-white rounded-lg shadow-2xl flex flex-col z-50 h-[500px] border border-slate-200">
+        <div className="fixed bottom-24 right-6 w-96  rounded-lg  flex flex-col z-50 h-[500px] border border-slate-200 transition-all">
           {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -152,8 +176,8 @@ export default function ChatBot() {
 
       {/* Floating Chat Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-40 border-4 border-white"
+        onClick={isOpen ? closeChatModelFunction : openChatModelFunction}
+        className="fixed bottom-0 right-0 w-14 h-14 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-full  hover:scale-110 transition-all duration-200 flex items-center justify-center z-40 border-4 border-white cursor-pointer "
       >
         {isOpen ? (
           <X className="w-6 h-6" />
@@ -163,4 +187,6 @@ export default function ChatBot() {
       </button>
     </>
   );
-}
+};
+
+export default ChatBot;
