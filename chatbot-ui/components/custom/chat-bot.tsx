@@ -13,6 +13,10 @@ import {
 } from "@/app/apis/chatbot.api";
 import { v4 as uuidV4 } from "uuid";
 import { Message } from "@/app/types/chatbot.types";
+import {
+  getChatSession,
+  setChatSession,
+} from "@/helper/session-storage.helper";
 
 interface InitialChatBotProps {
   postPassingMessageFunction: (properties: CSSProperties) => void;
@@ -34,7 +38,10 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
   };
 
   useEffect(() => {
-    getSessionDetailsFunction("69a40c49abcf03f0242b4a38");
+    let sessionExist = getChatSession();
+    if (sessionExist) {
+      getSessionDetailsFunction(sessionExist);
+    }
   }, []);
 
   useEffect(() => {
@@ -120,6 +127,7 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
       setSessionDetails({
         ...details,
       });
+      setChatSession(details?._id);
     }
 
     setInfo((prev) => ({
@@ -241,3 +249,5 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
 };
 
 export default ChatBot;
+
+// 69a40c49abcf03f0242b4a38
