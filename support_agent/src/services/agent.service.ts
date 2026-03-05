@@ -4,6 +4,7 @@ import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { StructuredTool } from "@langchain/core/tools";
 import { gemini_model_names } from "../constants/gemini.constant";
 import { IMessage } from "../schema/chatAgent.model";
+import contactFormDetailsTool from "../tools/contactForm.tool";
 
 interface AgentServiceConfig {
   maxOutputTokens?: number;
@@ -54,7 +55,7 @@ class AgentService {
       temperature: this.temperature,
     });
 
-    this.agentTools = [];
+    this.agentTools = [contactFormDetailsTool];
   }
 
   private buildMessageHistory(history: IMessage[] = []): BaseMessage[] {
