@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   getChatSession,
   setChatSession,
 } from "@/helper/session-storage.helper";
+import ScrollToBottom from "react-scroll-to-bottom";
 
 interface InitialChatBotProps {
   postPassingMessageFunction: (properties: CSSProperties) => void;
@@ -31,11 +32,6 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
     isLoading: false,
     inputMessage: "",
   });
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   useEffect(() => {
     let sessionExist = getChatSession();
@@ -43,10 +39,6 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
       getSessionDetailsFunction(sessionExist);
     }
   }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [sessionDetails?.messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,11 +163,12 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+          <ScrollToBottom className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+            {" "}
             {sessionDetails?.messages?.map((message) => (
               <div
                 key={message?._id}
-                className={`flex ${message.role === "human" ? "justify-end" : "justify-start"}`}
+                className={`flex my-2 ${message.role === "human" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
@@ -205,8 +198,7 @@ const ChatBot: React.FC<InitialChatBotProps> = ({
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
+          </ScrollToBottom>
 
           {/* Input Area */}
           <div className="border-t border-slate-200 bg-white px-4 py-3 rounded-b-lg">
